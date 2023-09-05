@@ -3,8 +3,8 @@
 import IPuppeteerHandler_Browser from "./handlers/puppeteer/puppeteer-browser-handler/IPuppeteerHandler_Browser";
 import PuppeteerHandler_Browser from "./handlers/puppeteer/puppeteer-browser-handler/PuppeteerHandler_Browser";
 import utils from "./utils/utils";
-import * as ExcelJS from 'exceljs';
-import * as fs from 'fs';
+import * as ExcelJS from "exceljs";
+import * as fs from "fs";
 
 type IMainPageResultAnalysis = {
   pageURls: string[];
@@ -16,16 +16,14 @@ type ILandingPageResultAnalysis = {
 };
 
 export class BusinessJob {
-  async actuallyWork() {
+  async actuallyWork(mainPageURL: string, fileName: string) {
     try {
       let browser: IPuppeteerHandler_Browser | undefined;
       console.log(`Navigating to website...`);
       browser = await PuppeteerHandler_Browser.createNewBrowser("en", "");
       const sitePage = await browser.createNewPage("sitePage");
       await sitePage.bringToFront();
-      await sitePage.navigateTo(
-        "https://www.ejendomstorvet.dk/ledigelokaler/koeb"
-      );
+      await sitePage.navigateTo(mainPageURL);
       await sitePage.waitForTime(10000);
       await sitePage.buttonClick(
         "#cc_div > #cm > #c-inr > #c-bns > #c-p-bn",
@@ -52,11 +50,38 @@ export class BusinessJob {
         );
         allItemsData.push(result);
       }
-
-      utils.consoleDebug(allItemsData);
       browser.closePuppeteerObjects();
+
+      // Create a new Excel workbook and worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(fileName);
+
+      // Define the headers based on the keys of the first object
+      const headers = Object.keys(allItemsData[0]);
+
+      // Add headers to the worksheet
+      worksheet.addRow(headers);
+
+      // Add data to the worksheet
+      allItemsData.forEach((item: any) => {
+        const row = headers.map((header) => item[header]);
+        worksheet.addRow(row);
+      });
+
+      // Define the filename and path
+      const xlFilename = `${fileName}.xlsx`;
+
+      // Save the workbook to a file
+      workbook.xlsx
+        .writeFile(xlFilename)
+        .then(() => {
+          utils.consoleDebug(`Excel file "${xlFilename}" has been saved.`);
+        })
+        .catch((err) => {
+          utils.consoleError(`Error saving Excel file:${err}`);
+        });
     } catch (error) {
-      console.log(error);
+      utils.consoleError(error);
     }
   }
 
@@ -97,6 +122,18 @@ export class BusinessJob {
 }
 
 (async () => {
+  utils.consoleDebug(`Job started at:${new Date()}`);
+
   const businessJobInstance = new BusinessJob();
-  await businessJobInstance.actuallyWork();
+  await businessJobInstance.actuallyWork(
+    "https://www.ejendomstorvet.dk/ledigelokaler/koeb",
+    "koeb"
+  );
+
+  await businessJobInstance.actuallyWork(
+    "https://www.ejendomstorvet.dk/ledigelokaler/leje",
+    "leje"
+  );
+
+  utils.consoleDebug(`Job end at:${new Date()}`);
 })();
