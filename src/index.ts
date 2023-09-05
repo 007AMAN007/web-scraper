@@ -13,6 +13,16 @@ type IMainPageResultAnalysis = {
 type ILandingPageResultAnalysis = {
   tag: string;
   title: string;
+  excerpt: string;
+  area: string;
+  energyLabel: string;
+  caseNumber: string;
+  type: string;
+  purpose: string;
+  economy: string;
+  room: string;
+  facilities: string;
+  technique: string;
 };
 
 export class BusinessJob {
@@ -24,17 +34,17 @@ export class BusinessJob {
       const sitePage = await browser.createNewPage("sitePage");
       await sitePage.bringToFront();
       await sitePage.navigateTo(mainPageURL);
-      await sitePage.waitForTime(10000);
+      // await sitePage.waitForTime(10000);
       await sitePage.buttonClick(
         "#cc_div > #cm > #c-inr > #c-bns > #c-p-bn",
         "Accept Cookies"
       );
-      await sitePage.waitForTime(10000);
+      await sitePage.waitForTime(5000);
       await sitePage.buttonClick(
         ".results__next > .results__nexttext",
         "See More"
       );
-      await sitePage.waitForTime(10000);
+      await sitePage.waitForTime(5000);
 
       const pageResult = await sitePage.getPageEvaluateResult(
         this.mainPageResult,
@@ -111,10 +121,48 @@ export class BusinessJob {
 
     const tag = divElement.querySelector(".viewprop__type")?.textContent || "";
     const title = divElement.querySelector("h1")?.textContent || "";
+    const excerpt =
+      divElement.querySelector(".viewprop__heading")?.textContent || "";
+    const area =
+      divElement
+        .querySelector(".viewprop__main")
+        ?.querySelector("div:nth-child(1)")?.textContent || "";
+    const energyLabel =
+      divElement
+        .querySelector(".viewprop__main")
+        ?.querySelector("div:nth-child(2)")?.textContent || "";
+    const caseNumber =
+      divElement.querySelector(
+        ".viewprop__caseid > span:nth-child(1) > font > font"
+      )?.textContent || "";
+    const type =
+      divElement.querySelector(".viewprop__caseid > span:nth-child(2) > a")
+        ?.textContent || "";
+    const purpose =
+      divElement.querySelector(".viewprop__usage > div")?.textContent || "";
+    const economy =
+      divElement.querySelector(".viewprop__economy > div")?.textContent || "";
+    const room =
+      divElement.querySelector(".viewprop__info > div")?.textContent || "";
+    const facilities =
+      divElement.querySelector(".viewprop__facility > div")?.textContent || "";
+    const technique =
+      divElement.querySelector(".viewprop__technology > div")?.textContent ||
+      "";
 
     const data: ILandingPageResultAnalysis = {
       tag: tag,
       title: title,
+      excerpt: excerpt,
+      area: area,
+      energyLabel: energyLabel,
+      caseNumber: caseNumber,
+      type: type,
+      purpose: purpose,
+      economy: economy,
+      room: room,
+      facilities: facilities,
+      technique: technique,
     };
 
     return Promise.resolve(data);
@@ -137,3 +185,5 @@ export class BusinessJob {
 
   utils.consoleDebug(`Job end at:${new Date()}`);
 })();
+
+//viewprop__economy

@@ -30,7 +30,7 @@ export default class PuppeteerHandler_Page implements IPuppeteerHandler_Page {
     for (let i = 0; i < 10 && !isSuccessFull; i++) {
       try {
         await this.page.goto(url, { waitUntil });
-        await this.waitTillHTMLRendered();
+        //await this.waitTillHTMLRendered();
         isSuccessFull = true;
       } catch (e) {
         try {
