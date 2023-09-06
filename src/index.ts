@@ -117,7 +117,7 @@ export class BusinessJob {
   async landingPageResult(
     divSelector: string
   ): Promise<ILandingPageResultAnalysis> {
-    const makeReadableStringForExcelCell = (inputString: string) => {
+    const makeReadableStringWithCommaForExcelCell = (inputString: string) => {
       const lines = inputString.trim().split("\n");
       const outputString = lines.join(", ");
       const filteredString = outputString
@@ -127,6 +127,13 @@ export class BusinessJob {
         .join(", ");
 
       return filteredString;
+    };
+
+    const trimAndRemoveWhiteSpacesFromString = (inputString: string) => {
+      const cleanedString = inputString.trim();
+      const formattedString = cleanedString.replace(/\s+/g, " ");
+
+      return formattedString;
     };
 
     const divElement = document.querySelector(divSelector) as HTMLElement;
@@ -139,10 +146,13 @@ export class BusinessJob {
       divElement
         .querySelector(".viewprop__main")
         ?.querySelector("div:nth-child(1)")?.textContent || "";
-    const energyLabel =
+    let energyLabel =
       divElement
         .querySelector(".viewprop__main")
         ?.querySelector("div:nth-child(2)")?.textContent || "";
+    if (energyLabel) {
+      energyLabel = trimAndRemoveWhiteSpacesFromString(energyLabel);
+    }
     let caseNumber =
       divElement.querySelector(".viewprop__caseid > span:nth-child(1)")
         ?.textContent || "";
@@ -156,23 +166,29 @@ export class BusinessJob {
     let purpose =
       divElement.querySelector(".viewprop__usage > div")?.textContent || "";
     if (purpose) {
-      purpose = makeReadableStringForExcelCell(purpose);
+      purpose = makeReadableStringWithCommaForExcelCell(purpose);
     }
 
-    const economy =
+    let economy =
       divElement.querySelector(".viewprop__economy > div")?.textContent || "";
-    const room =
+    if (economy) {
+      economy = trimAndRemoveWhiteSpacesFromString(economy);
+    }
+    let room =
       divElement.querySelector(".viewprop__info > div")?.textContent || "";
+    if (room) {
+      room = trimAndRemoveWhiteSpacesFromString(room);
+    }
     let facilities =
       divElement.querySelector(".viewprop__facility > div")?.textContent || "";
     if (facilities) {
-      facilities = makeReadableStringForExcelCell(facilities);
+      facilities = makeReadableStringWithCommaForExcelCell(facilities);
     }
     let technique =
       divElement.querySelector(".viewprop__technology > div")?.textContent ||
       "";
     if (technique) {
-      technique = makeReadableStringForExcelCell(technique);
+      technique = makeReadableStringWithCommaForExcelCell(technique);
     }
 
     const data: ILandingPageResultAnalysis = {
@@ -192,13 +208,6 @@ export class BusinessJob {
 
     return Promise.resolve(data);
   }
-
-  // makeReadableStringForExcelCell(inputString: string) {
-  //   const lines = inputString.trim().split("\n");
-  //   const outputString = lines.join(", ");
-
-  //   return outputString;
-  // }
 }
 
 (async () => {
@@ -217,5 +226,3 @@ export class BusinessJob {
 
   utils.consoleDebug(`Job end at:${new Date()}`);
 })();
-
-//viewprop__economy
