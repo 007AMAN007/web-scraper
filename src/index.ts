@@ -131,15 +131,22 @@ export class BusinessJob {
       divElement
         .querySelector(".viewprop__main")
         ?.querySelector("div:nth-child(2)")?.textContent || "";
-    const caseNumber =
-      divElement.querySelector(
-        ".viewprop__caseid > span:nth-child(1) > font > font"
-      )?.textContent || "";
+    let caseNumber =
+      divElement.querySelector(".viewprop__caseid > span:nth-child(1)")
+        ?.textContent || "";
+    if (caseNumber) {
+      caseNumber = caseNumber.replace("Sagsnummer: ", "");
+    }
+
     const type =
       divElement.querySelector(".viewprop__caseid > span:nth-child(2) > a")
         ?.textContent || "";
-    const purpose =
+    let purpose =
       divElement.querySelector(".viewprop__usage > div")?.textContent || "";
+    if (purpose) {
+      purpose = this.makeReadableStringForExcelCell(purpose);
+    }
+
     const economy =
       divElement.querySelector(".viewprop__economy > div")?.textContent || "";
     const room =
@@ -166,6 +173,13 @@ export class BusinessJob {
     };
 
     return Promise.resolve(data);
+  }
+
+  makeReadableStringForExcelCell(inputString: string) {
+    const lines = inputString.trim().split("\n");
+    const outputString = lines.join(", ");
+
+    return outputString;
   }
 }
 
