@@ -117,6 +117,18 @@ export class BusinessJob {
   async landingPageResult(
     divSelector: string
   ): Promise<ILandingPageResultAnalysis> {
+    const makeReadableStringForExcelCell = (inputString: string) => {
+      const lines = inputString.trim().split("\n");
+      const outputString = lines.join(", ");
+      const filteredString = outputString
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item !== "")
+        .join(", ");
+
+      return filteredString;
+    };
+
     const divElement = document.querySelector(divSelector) as HTMLElement;
 
     const tag = divElement.querySelector(".viewprop__type")?.textContent || "";
@@ -144,18 +156,24 @@ export class BusinessJob {
     let purpose =
       divElement.querySelector(".viewprop__usage > div")?.textContent || "";
     if (purpose) {
-      purpose = this.makeReadableStringForExcelCell(purpose);
+      purpose = makeReadableStringForExcelCell(purpose);
     }
 
     const economy =
       divElement.querySelector(".viewprop__economy > div")?.textContent || "";
     const room =
       divElement.querySelector(".viewprop__info > div")?.textContent || "";
-    const facilities =
+    let facilities =
       divElement.querySelector(".viewprop__facility > div")?.textContent || "";
-    const technique =
+    if (facilities) {
+      facilities = makeReadableStringForExcelCell(facilities);
+    }
+    let technique =
       divElement.querySelector(".viewprop__technology > div")?.textContent ||
       "";
+    if (technique) {
+      technique = makeReadableStringForExcelCell(technique);
+    }
 
     const data: ILandingPageResultAnalysis = {
       tag: tag,
@@ -175,12 +193,12 @@ export class BusinessJob {
     return Promise.resolve(data);
   }
 
-  makeReadableStringForExcelCell(inputString: string) {
-    const lines = inputString.trim().split("\n");
-    const outputString = lines.join(", ");
+  // makeReadableStringForExcelCell(inputString: string) {
+  //   const lines = inputString.trim().split("\n");
+  //   const outputString = lines.join(", ");
 
-    return outputString;
-  }
+  //   return outputString;
+  // }
 }
 
 (async () => {
