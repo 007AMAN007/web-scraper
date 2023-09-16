@@ -32,13 +32,19 @@ type ILandingPageResultAnalysis = {
   Energikategori: string;
   Type: string;
   Benyttelse: string;
-  "Leje pr aar": number;
-  "Driftsudgifter pr aar": number;
+  "Leje pr aar"?: number;
+  "Driftsudgifter pr aar"?: number;
   "Etage areal": string | number;
   Sekundært: string | number;
   "Grund areal": string | number;
   Faciliteter: string;
   Teknik: string;
+  "Pris i kr."?: string | number;
+  "Årlige lejeindtægt kr."?: string | number;
+  "Pris pr. m² kr."?: string | number;
+  "Årlige lejeindtægt pr. m² kr."?: string | number;
+  "Årlige driftsudgifter kr. "?: string | number;
+  "Årlige driftsudgifter pr. m² kr."?: string | number;
 };
 
 export class BusinessJob {
@@ -72,7 +78,8 @@ export class BusinessJob {
         await sitePage.navigateTo(url);
         const result = await sitePage.getPageEvaluateResult(
           this.landingPageResult,
-          ".content-flex"
+          ".content-flex",
+          fileName
         );
         allItemsData.push(result);
       }
@@ -131,7 +138,8 @@ export class BusinessJob {
   }
 
   async landingPageResult(
-    divSelector: string
+    divSelector: string,
+    fileName: string
   ): Promise<ILandingPageResultAnalysis> {
     const makeReadableStringWithCommaForExcelCell = (inputString: string) => {
       const lines = inputString.trim().split("\n");
@@ -207,27 +215,6 @@ export class BusinessJob {
       technique = makeReadableStringWithCommaForExcelCell(technique);
     }
 
-    /* Calculation for economy -- start */
-    const annualLeaseMatches = economy.match(/Årlig leje (\d+\.?\d*)/);
-    const annualOperatingCostsMatches = economy.match(
-      /Årlige driftsudgifter kr\. (\d+\.?\d*)/
-    );
-
-    let annualLeaseValue = "";
-    let annualOperatingCostsValue = "";
-
-    if (annualLeaseMatches) {
-      annualLeaseValue = annualLeaseMatches[1].replace(".", "");
-    }
-
-    if (annualOperatingCostsMatches) {
-      annualOperatingCostsValue = annualOperatingCostsMatches[1].replace(
-        ".",
-        ""
-      );
-    }
-    /* Calculation for economy -- end  */
-
     /* Calculation for room -- start */
     const floorAreaMatch = room.match(/Etage areal (\d+) m²/);
     const secondaryAreaMatch = room.match(/Sekundært areal (\d+) m²/);
@@ -241,26 +228,95 @@ export class BusinessJob {
     const parts = remainingString.trim().split(" ");
     /* Calculation for title -- start */
 
-    const data: ILandingPageResultAnalysis = {
-      "Type til leje": tag,
-      Adresse: address,
-      Postnummer: Number(parts[0].trim()),
-      By: parts.slice(1).join(" ").trim(),
-      Beskrivelse: excerpt,
-      Areal: Number(area.match(/\d+/)),
-      Energikategori: energyLabel,
-      Type: type,
-      Benyttelse: purpose,
-      "Leje pr aar": Number(annualLeaseValue),
-      "Driftsudgifter pr aar": Number(annualOperatingCostsValue),
-      "Etage areal": floorAreaMatch ? Number(floorAreaMatch[1]) : "",
-      Sekundært: secondaryAreaMatch ? Number(secondaryAreaMatch[1]) : "",
-      "Grund areal": groundAreaMatch ? Number(groundAreaMatch[1]) : "",
-      Faciliteter: facilities,
-      Teknik: technique,
-    };
+    if (fileName === "leje") {
+      /* Calculation for economy -- start */
+      const annualLeaseMatches = economy.match(/Årlig leje (\d+\.?\d*)/);
+      const annualOperatingCostsMatches = economy.match(
+        /Årlige driftsudgifter kr\. (\d+\.?\d*)/
+      );
 
-    return Promise.resolve(data);
+      let annualLeaseValue = "";
+      let annualOperatingCostsValue = "";
+
+      if (annualLeaseMatches) {
+        annualLeaseValue = annualLeaseMatches[1].replace(".", "");
+      }
+
+      if (annualOperatingCostsMatches) {
+        annualOperatingCostsValue = annualOperatingCostsMatches[1].replace(
+          ".",
+          ""
+        );
+      }
+      /* Calculation for economy -- end  */
+
+      const data: ILandingPageResultAnalysis = {
+        "Type til leje": tag,
+        Adresse: address,
+        Postnummer: Number(parts[0].trim()),
+        By: parts.slice(1).join(" ").trim(),
+        Beskrivelse: excerpt,
+        Areal: Number(area.match(/\d+/)),
+        Energikategori: energyLabel,
+        Type: type,
+        Benyttelse: purpose,
+        "Leje pr aar": Number(annualLeaseValue),
+        "Driftsudgifter pr aar": Number(annualOperatingCostsValue),
+        "Etage areal": floorAreaMatch ? Number(floorAreaMatch[1]) : "",
+        Sekundært: secondaryAreaMatch ? Number(secondaryAreaMatch[1]) : "",
+        "Grund areal": groundAreaMatch ? Number(groundAreaMatch[1]) : "",
+        Faciliteter: facilities,
+        Teknik: technique,
+      };
+      return Promise.resolve(data);
+    } else {
+      /* Calculation for economy -- start */
+      const regex = /(\d[\d\.]*)\,-/g;
+      const matches = economy.match(regex);
+      /* Calculation for economy -- end  */
+
+      const data: ILandingPageResultAnalysis = {
+        "Type til leje": tag,
+        Adresse: address,
+        Postnummer: Number(parts[0].trim()),
+        By: parts.slice(1).join(" ").trim(),
+        Beskrivelse: excerpt,
+        Areal: Number(area.match(/\d+/)),
+        Energikategori: energyLabel,
+        Type: type,
+        Benyttelse: purpose,
+        "Pris i kr.":
+          matches && matches[0]
+            ? parseFloat(matches[0].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Årlige lejeindtægt kr.":
+          matches && matches[1]
+            ? parseFloat(matches[1].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Pris pr. m² kr.":
+          matches && matches[2]
+            ? parseFloat(matches[2].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Årlige lejeindtægt pr. m² kr.":
+          matches && matches[3]
+            ? parseFloat(matches[3].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Årlige driftsudgifter kr. ":
+          matches && matches[4]
+            ? parseFloat(matches[4].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Årlige driftsudgifter pr. m² kr.":
+          matches && matches[5]
+            ? parseFloat(matches[5].replace(/\./g, "").replace(",", "."))
+            : "",
+        "Etage areal": floorAreaMatch ? Number(floorAreaMatch[1]) : "",
+        Sekundært: secondaryAreaMatch ? Number(secondaryAreaMatch[1]) : "",
+        "Grund areal": groundAreaMatch ? Number(groundAreaMatch[1]) : "",
+        Faciliteter: facilities,
+        Teknik: technique,
+      };
+      return Promise.resolve(data);
+    }
   }
 }
 
@@ -268,10 +324,10 @@ export class BusinessJob {
   utils.consoleDebug(`Job started at:${new Date()}`);
 
   const businessJobInstance = new BusinessJob();
-  // await businessJobInstance.actuallyWork(
-  //   "https://www.ejendomstorvet.dk/ledigelokaler/koeb",
-  //   "koeb"
-  // );
+  await businessJobInstance.actuallyWork(
+    "https://www.ejendomstorvet.dk/ledigelokaler/koeb",
+    "koeb"
+  );
 
   await businessJobInstance.actuallyWork(
     "https://www.ejendomstorvet.dk/ledigelokaler/leje",
