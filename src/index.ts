@@ -101,6 +101,21 @@ export class BusinessJob {
         worksheet.addRow(row);
       });
 
+      // Dynamically adjust column widths based on content
+      worksheet.columns.forEach((column: any) => {
+        if (column) {
+          let maxLength = 0;
+          column.eachCell({ includeEmpty: true }, (cell: any) => {
+            const cellValue = cell.text ? cell.text : ""; // Get cell text
+            const columnLength = cellValue.toString().length;
+            if (columnLength > maxLength) {
+              maxLength = columnLength;
+            }
+          });
+          column.width = maxLength + 2; // Add some padding
+        }
+      });
+
       // Define the filename and path
       const xlFilename = `${fileName}.xlsx`;
 
