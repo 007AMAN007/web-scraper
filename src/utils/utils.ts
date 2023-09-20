@@ -96,8 +96,8 @@ function consoleError(errStr: unknown): void {
 
 function isDevEnvironment(): boolean {
   // return process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
-  // return true;
-  return false;
+  return true;
+  // return false;
 }
 
 export default {

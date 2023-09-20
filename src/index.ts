@@ -62,10 +62,17 @@ export class BusinessJob {
         "Accept Cookies"
       );
       await sitePage.waitForTime(5000);
-      await sitePage.buttonClick(
-        ".results__next > .results__nexttext",
-        "See More"
-      );
+      let seeMoreButtonExists = true;
+      const seeMoreButtonElement = ".results__next > .results__nexttext";
+      while (seeMoreButtonExists) {
+        seeMoreButtonExists = await sitePage.checkIfElementExist(
+          seeMoreButtonElement
+        );
+        if (seeMoreButtonExists) {
+          await sitePage.buttonClick(seeMoreButtonElement, "See More");
+        }
+      }
+
       await sitePage.waitForTime(5000);
 
       const pageResult = await sitePage.getPageEvaluateResult(
