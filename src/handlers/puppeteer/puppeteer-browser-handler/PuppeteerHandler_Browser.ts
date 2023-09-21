@@ -75,7 +75,7 @@ export default class PuppeteerHandler_Browser
     }
     Puppeteer.use(StealthPlugin());
     const browser = await Puppeteer.launch({
-      executablePath: "/usr/local/bin/chromium",
+      executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
       headless: !utils.isDevEnvironment(),
       args: browserArgs,
     });
