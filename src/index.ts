@@ -94,7 +94,9 @@ export class BusinessJob {
 
       // Create a new Excel workbook and worksheet
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet(fileName);
+      const worksheet = workbook.addWorksheet(fileName, {
+        views: [{ state: "frozen", ySplit: 1 }],
+      });
 
       // Define the headers based on the keys of the first object
       const headers = Object.keys(allItemsData[0]);
@@ -279,7 +281,7 @@ export class BusinessJob {
         By: parts.slice(1).join(" ").trim(),
         Beskrivelse: excerpt,
         Areal: Number(area.match(/\d+/)),
-        Energikategori: energyLabel,
+        Energikategori: energyLabel.split(" ")[0],
         Type: type,
         Benyttelse: purpose,
         "Leje pr aar": Number(annualLeaseValue),
@@ -304,7 +306,7 @@ export class BusinessJob {
         By: parts.slice(1).join(" ").trim(),
         Beskrivelse: excerpt,
         Areal: Number(area.match(/\d+/)),
-        Energikategori: energyLabel,
+        Energikategori: energyLabel.split(" ")[0],
         Type: type,
         Benyttelse: purpose,
         "Pris i kr.":
