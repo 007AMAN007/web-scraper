@@ -45,6 +45,7 @@ type ILandingPageResultAnalysis = {
   "Årlige lejeindtægt pr. m² kr."?: string | number;
   "Årlige driftsudgifter kr. "?: string | number;
   "Årlige driftsudgifter pr. m² kr."?: string | number;
+  "Afkast %"?: string | number;
 };
 
 export class BusinessJob {
@@ -57,23 +58,23 @@ export class BusinessJob {
       await sitePage.bringToFront();
       await sitePage.navigateTo(mainPageURL);
       // await sitePage.waitForTime(10000);
-      await sitePage.buttonClick(
-        "#cc_div > #cm > #c-inr > #c-bns > #c-p-bn",
-        "Accept Cookies"
-      );
-      await sitePage.waitForTime(5000);
-      let seeMoreButtonExists = true;
-      const seeMoreButtonElement = ".results__next > .results__nexttext";
-      while (seeMoreButtonExists) {
-        seeMoreButtonExists = await sitePage.checkIfElementExist(
-          seeMoreButtonElement
-        );
-        if (seeMoreButtonExists) {
-          await sitePage.buttonClick(seeMoreButtonElement, "See More");
-        }
-      }
+      // await sitePage.buttonClick(
+      //   "#cc_div > #cm > #c-inr > #c-bns > #c-p-bn",
+      //   "Accept Cookies"
+      // );
+      // await sitePage.waitForTime(5000);
+      // let seeMoreButtonExists = true;
+      // const seeMoreButtonElement = ".results__next > .results__nexttext";
+      // while (seeMoreButtonExists) {
+      //   seeMoreButtonExists = await sitePage.checkIfElementExist(
+      //     seeMoreButtonElement
+      //   );
+      //   if (seeMoreButtonExists) {
+      //     await sitePage.buttonClick(seeMoreButtonElement, "See More");
+      //   }
+      // }
 
-      await sitePage.waitForTime(5000);
+      // await sitePage.waitForTime(5000);
 
       const pageResult = await sitePage.getPageEvaluateResult(
         this.mainPageResult,
@@ -254,9 +255,9 @@ export class BusinessJob {
 
     if (fileName === "leje") {
       /* Calculation for economy -- start */
-      const annualLeaseMatches = economy.match(/Årlig leje (\d+\.?\d*)/);
+      const annualLeaseMatches = economy.match(/Årlig leje (\d+\.\d+),-/);
       const annualOperatingCostsMatches = economy.match(
-        /Årlige driftsudgifter kr\. (\d+\.?\d*)/
+        /Årlige driftsudgifter kr\. (\d+(?:\.\d+)*)/
       );
 
       let annualLeaseValue = "";
@@ -295,8 +296,63 @@ export class BusinessJob {
       return Promise.resolve(data);
     } else {
       /* Calculation for economy -- start */
-      const regex = /(\d[\d\.]*)\,-/g;
-      const matches = economy.match(regex);
+      const priceInDKKMatches = economy.match(/Pris i kr\. (\d+(?:\.\d+)*)/);
+      const annualRentalIncomeInDKKMatches = economy.match(
+        /Årlig lejeindtægt\. i alt kr\. (\S+),-/
+      );
+      const pricePerMeterSquareInDKKMatches = economy.match(
+        /Kr.\/m² (\d+(?:\.\d{3})*(?:,\d+)?)/
+      );
+      const annualRentalIncomePerMeterSquareDKKMatches = economy.match(
+        /Årlig lejeindt\. pr\. etage m² kr\. (\d+(\.\d+)*)/
+      );
+      const annualOperatingCostsMatches = economy.match(
+        /Årlige driftsudgifter kr\. (\d+(?:\.\d+)*)/
+      );
+      const annualOperatingCostsPerMeterSquareMatches = economy.match(
+        /Årlige driftsudgifter pr\. m² (\d+),-/
+      );
+      const returnsMatches = economy.match(/Afkast % ([+\-]?\d+,\d+) %/);
+
+      let priceInDKK = "";
+      let annualRentalIncomeInDKK = "";
+      let pricePerMeterSquareInDKK = "";
+      let annualRentalIncomePerMeterSquareDKK = "";
+      let annualOperatingCosts = "";
+      let annualOperatingCostsPerMeterSquare = "";
+      let returns = "";
+
+      if (priceInDKKMatches) {
+        priceInDKK = priceInDKKMatches[1].replaceAll(".", "");
+      }
+
+      if (annualRentalIncomeInDKKMatches) {
+        annualRentalIncomeInDKK = annualRentalIncomeInDKKMatches[1].replaceAll(
+          ".",
+          ""
+        );
+      }
+      if (pricePerMeterSquareInDKKMatches) {
+        pricePerMeterSquareInDKK =
+          pricePerMeterSquareInDKKMatches[1].replaceAll(".", "");
+      }
+      if (annualRentalIncomePerMeterSquareDKKMatches) {
+        annualRentalIncomePerMeterSquareDKK =
+          annualRentalIncomePerMeterSquareDKKMatches[1].replaceAll(".", "");
+      }
+      if (annualOperatingCostsMatches) {
+        annualOperatingCosts = annualOperatingCostsMatches[1].replaceAll(
+          ".",
+          ""
+        );
+      }
+      if (annualOperatingCostsPerMeterSquareMatches) {
+        annualOperatingCostsPerMeterSquare =
+          annualOperatingCostsPerMeterSquareMatches[1].replaceAll(".", "");
+      }
+      if (returnsMatches) {
+        returns = returnsMatches[1].replaceAll(",", ".");
+      }
       /* Calculation for economy -- end  */
 
       const data: ILandingPageResultAnalysis = {
@@ -309,30 +365,13 @@ export class BusinessJob {
         Energikategori: energyLabel.split(" ")[0],
         Type: type,
         Benyttelse: purpose,
-        "Pris i kr.":
-          matches && matches[0]
-            ? parseFloat(matches[0].replace(/\./g, "").replace(",", "."))
-            : "",
-        "Årlige lejeindtægt kr.":
-          matches && matches[1]
-            ? parseFloat(matches[1].replace(/\./g, "").replace(",", "."))
-            : "",
-        "Pris pr. m² kr.":
-          matches && matches[2]
-            ? parseFloat(matches[2].replace(/\./g, "").replace(",", "."))
-            : "",
-        "Årlige lejeindtægt pr. m² kr.":
-          matches && matches[3]
-            ? parseFloat(matches[3].replace(/\./g, "").replace(",", "."))
-            : "",
-        "Årlige driftsudgifter kr. ":
-          matches && matches[4]
-            ? parseFloat(matches[4].replace(/\./g, "").replace(",", "."))
-            : "",
-        "Årlige driftsudgifter pr. m² kr.":
-          matches && matches[5]
-            ? parseFloat(matches[5].replace(/\./g, "").replace(",", "."))
-            : "",
+        "Pris i kr.": priceInDKK,
+        "Årlige lejeindtægt kr.": annualRentalIncomeInDKK,
+        "Pris pr. m² kr.": pricePerMeterSquareInDKK,
+        "Årlige lejeindtægt pr. m² kr.": annualRentalIncomePerMeterSquareDKK,
+        "Årlige driftsudgifter kr. ": annualOperatingCosts,
+        "Årlige driftsudgifter pr. m² kr.": annualOperatingCostsPerMeterSquare,
+        "Afkast %": returns,
         "Etage areal": floorAreaMatch ? Number(floorAreaMatch[1]) : "",
         Sekundært: secondaryAreaMatch ? Number(secondaryAreaMatch[1]) : "",
         "Grund areal": groundAreaMatch ? Number(groundAreaMatch[1]) : "",
@@ -348,13 +387,13 @@ export class BusinessJob {
   utils.consoleDebug(`Job started at:${new Date()}`);
 
   const businessJobInstance = new BusinessJob();
-  await businessJobInstance.actuallyWork(
-    "https://www.ejendomstorvet.dk/ledigelokaler/koeb",
-    "koeb"
-  );
+  // await businessJobInstance.actuallyWork(
+  //   "file:///Users/asafshifer/Downloads/invest.html",
+  //   "koeb"
+  // );
 
   await businessJobInstance.actuallyWork(
-    "https://www.ejendomstorvet.dk/ledigelokaler/leje",
+    "file:///Users/asafshifer/Downloads/rental.html",
     "leje"
   );
 
